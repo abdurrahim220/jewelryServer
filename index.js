@@ -25,13 +25,17 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const dataCollectionCollection = client
+    const dataCollection = client
       .db("Jewelry")
       .collection("dataCollection");
+    const addToCartCollection = client
+      .db("Jewelry")
+      .collection("carts");
 
+      // get data
     app.get("/products", async (req, res) => {
       try {
-        const result = await dataCollectionCollection.find().toArray();
+        const result = await dataCollection.find().toArray();
         if (result) {
           res.status(200).send(result);
         } else {
@@ -48,7 +52,7 @@ async function run() {
       try {
         const id = req.params.id;
         const query = { _id: new ObjectId(id) };
-        const result = await dataCollectionCollection.findOne(query);
+        const result = await dataCollection.findOne(query);
         if (result) {
           res.send(result);
         } else {
@@ -59,6 +63,36 @@ async function run() {
         res.status(500).send("Internal Server Error");
       }
     });
+
+    // post api
+    app.post('/products/addCart',async(req,res)=>{
+      const body = req.body;
+      // console.log(body)
+      const result = await addToCartCollection.insertOne(body);
+      res.send(result)
+      
+    })
+     
+    app.get('/item',async(req,res)=>{
+      try {
+        const result = await addToCartCollection.find().toArray();
+        if (result) {
+          res.status(200).send(result);
+        } else {
+          res.status(404).send("Not Found");
+        }
+      } catch (error) {
+        res.status(500).send("Internal Server Error");
+      }
+    })
+    app.delete('/item/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await addToCartCollection.deleteOne(query)
+      res.send(result)
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
